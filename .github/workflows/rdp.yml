@@ -1,132 +1,125 @@
-name: RDP Ngrok - DucThang x TrueHieu Edition
+name: RDP greenboyMC - Intro The Flash VIP PRO
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 */5 * * *"
-
-concurrency:
-  group: vps-ngrok-runner
-  cancel-in-progress: true
+    inputs:
+      ngrok_download_url:
+        description: 'Ngrok download link'
+        required: true
+        default: 'https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip'
 
 jobs:
   build:
     runs-on: windows-latest
-    permissions:
-      contents: write
-    timeout-minutes: 350
+    timeout-minutes: 360
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download and Extract ngrok
+      - name: Download ngrok
         run: |
-          Invoke-WebRequest -Uri "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip" -OutFile ngrok.zip
-          Expand-Archive ngrok.zip -DestinationPath ngrok
+          Invoke-WebRequest -Uri "${{ github.event.inputs.ngrok_download_url }}" -OutFile ngrok.zip
+          Expand-Archive ngrok.zip -DestinationPath .
 
-      - name: Authenticate ngrok
+      - name: Auth ngrok
         env:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-        run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+        run: .\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
 
-      - name: Enable RDP + Create Admin User
+      - name: Setup RDP + Max Fast Intro + Reduce Lag + Low Data Mode
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          New-LocalUser "DucthengTechDz" -Password (ConvertTo-SecureString "W1nd0ws-P4ssw0rd-2025!" -AsPlainText -Force) -FullName "DucthengTechDz"
-          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "DucthengTechDz"
-          Add-LocalGroupMember -Group "Administrators" -Member "DucthengTechDz"
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
-      - name: Optimize RDP (Video 120 FPS + Audio + Eco)
+          $fixedPassword = "greenboy123@"
+          New-LocalUser "greenboyMC" -Password (ConvertTo-SecureString -AsPlainText $fixedPassword -Force) -FullName "greenboyMC VIP" -Description "RDP GreenboyMC Pro" -ErrorAction SilentlyContinue
+
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "greenboyMC" -ErrorAction SilentlyContinue
+          Add-LocalGroupMember -Group "Administrators" -Member "greenboyMC" -ErrorAction SilentlyContinue
+
+          @("SysMain","WSearch","wuauserv","WinDefend","DiagTrack") | ForEach-Object {
+            Stop-Service -Name $_ -Force -ErrorAction SilentlyContinue
+            Set-Service -Name $_ -StartupType Disabled -ErrorAction SilentlyContinue
+          }
+          Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction SilentlyContinue
+
+          New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Force | Out-Null
+          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MaxCompressionLevel" -Value 2 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MinEncryptionLevel" -Value 1 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "NegotiateSecurityLayer" -Value 0 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services\Client' -Name "DisableRdpdr" -Value 1 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "fDisableCdm" -Value 1 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "ColorDepth" -Value 4 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "fEnableThinClient" -Value 1 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "fEnableDesktopComposition" -Value 0 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "fEnableWddmDriver" -Value 0 -ErrorAction SilentlyContinue
+
+          New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' -Force -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' -Name "VisualFXSetting" -Value 2 -ErrorAction SilentlyContinue
+
+          $explorerAdvanced = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+          if (!(Test-Path $explorerAdvanced)) { New-Item -Path $explorerAdvanced -Force | Out-Null }
+          Set-ItemProperty -Path $explorerAdvanced -Name "TaskbarAnimations" -Value 0 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path $explorerAdvanced -Name "ListviewAlphaSelect" -Value 0 -ErrorAction SilentlyContinue
+
+          $dwm = 'HKCU:\Software\Microsoft\Windows\DWM'
+          if (!(Test-Path $dwm)) { New-Item -Path $dwm -Force | Out-Null }
+          Set-ItemProperty -Path $dwm -Name "EnableAeroPeek" -Value 0 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path $dwm -Name "Animations" -Value 0 -ErrorAction SilentlyContinue
+
+          $windowMetrics = 'HKCU:\Control Panel\Desktop\WindowMetrics'
+          if (!(Test-Path $windowMetrics)) { New-Item -Path $windowMetrics -Force | Out-Null }
+          Set-ItemProperty -Path $windowMetrics -Name "MinAnimate" -Value "0" -ErrorAction SilentlyContinue
+
+          Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name "EnableTransparency" -Value 0 -ErrorAction SilentlyContinue
+          Set-ItemProperty -Path 'HKCU:\Control Panel\Desktop' -Name "DragFullWindows" -Value "0" -ErrorAction SilentlyContinue
+
+          Write-Host ""
+          Write-Host "╔════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║         RDP GREENBOYMC - THE FLASH VIP PRO         ║" -ForegroundColor Magenta
+          Write-Host "║                                                    ║" -ForegroundColor Green
+          Write-Host "║  Username → greenboyMC                             ║" -ForegroundColor Yellow
+          Write-Host "║  Password → greenboy123@                           ║" -ForegroundColor Yellow
+          Write-Host "║                                                    ║" -ForegroundColor Green
+          Write-Host "╚════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+          Write-Host ""
+
+      - name: Start Ngrok Tunnel - VIP PRO Flash Mode (Low Data)
         run: |
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "fEnableVirtualizedGraphics" -Value 1 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "AVCHardwareEncodePreferred" -Value 1 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "AVC444ModePreferred" -Value 1 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MinFrameRate" -Value 120 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MaxCompression" -Value 0 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "fLowBandwidth" -Value 0 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "fDisableWallpaper" -Value 1 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "fDisableFullWindowDrag" -Value 1 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "fDisableMenuAnims" -Value 1 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "fDisableThemes" -Value 1 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile' -Name "SystemResponsiveness" -Value 0 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile' -Name "NetworkThrottlingIndex" -Value 0xffffffff -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "fDisableAudioCapture" -Value 0 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "AudioQualityMode" -Value 2 -Type DWord -Force
-          New-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio' -Force | Out-Null
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio' -Name "Scheduling Category" -Value "High" -Type String -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio' -Name "Background Priority" -Value 1 -Type DWord -Force
-          Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MaxOutputBufferSize" -Value 16384 -Type DWord -Force
-          powercfg /setactive a1841308-3541-4fab-bc81-f71556f20b4a
-          powercfg /change monitor-timeout-ac 0
-          powercfg /change standby-timeout-ac 0
-          powercfg /change disk-timeout-ac 0
-          powercfg /change hibernate-timeout-ac 0
+          Write-Host ""
+          Write-Host "╔════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+          Write-Host "║         RDP GREENBOYMC - THE FLASH VIP PRO         ║" -ForegroundColor Magenta
+          Write-Host "║  ⚠️ CẢNH BÁO VIP PRO: Tránh vượt 1GB ngrok free!   ║" -ForegroundColor Red
+          Write-Host "║  - Chọn 'Modem (56 Kbps)' hoặc Low-speed trong RDP client" -ForegroundColor Yellow
+          Write-Host "║  - Không copy file lớn, xem video dài, mở nhiều tab" -ForegroundColor Yellow
+          Write-Host "║  - Ngrok free: max ~1GB/tháng → ~2-6h RDP low quality" -ForegroundColor Red
+          Write-Host "║  - Ping thấp region Asia (ap) cho Đồng Nai tốt     ║" -ForegroundColor Green
+          Write-Host "╚════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+          Write-Host ""
 
-      - name: Start ngrok + capture URL + commit rdp_info.txt
-        run: |
-          $USER = "DucthengTechDz"
-          $PASS = "W1nd0ws-P4ssw0rd-2025!"
+          Start-Process -WindowStyle Hidden -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389 --log=stdout --log-level=info --region=ap"
 
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global core.autocrlf false
+          Start-Sleep -Seconds 25
 
-          $ngrokProcess = Start-Process -FilePath ".\ngrok\ngrok.exe" `
-            -ArgumentList "tcp","3389","--region=ap","--log=stdout","--log-format=logfmt" `
-            -NoNewWindow -PassThru `
-            -RedirectStandardOutput "ngrok.log" `
-            -RedirectStandardError "ngrok-err.log"
-
-          Write-Host "Đợi ngrok cấp tunnel (max 3 phút)..."
-          $ngrokUrl = $null
-          for ($i = 0; $i -lt 60; $i++) {
-            Start-Sleep -Seconds 3
-            try {
-              $tunnels = (Invoke-RestMethod -Uri "http://127.0.0.1:4040/api/tunnels" -ErrorAction Stop).tunnels
-              if ($tunnels -and $tunnels.Length -gt 0) {
-                $ngrokUrl = $tunnels[0].public_url
-                Write-Host "Got tunnel: $ngrokUrl"
-                break
-              }
-            } catch {}
+          try {
+            $tunnels = Invoke-RestMethod http://localhost:4040/api/tunnels
+            $tcpTunnel = ($tunnels.tunnels | Where-Object { $_.proto -eq "tcp" }).public_url
+            if ($tcpTunnel) {
+              $hostPort = $tcpTunnel -replace "tcp://", ""
+              Write-Host "🌟 NGROK VIP ADDRESS (paste vào Remote Desktop Connection):" -ForegroundColor Green
+              Write-Host "          $hostPort" -ForegroundColor Magenta
+              Write-Host ""
+              Write-Host "  Username → greenboyMC" -ForegroundColor Yellow
+              Write-Host "  Password → greenboy123@" -ForegroundColor Yellow
+              Write-Host ""
+              Write-Host "⚡ Kết nối ngay bro! Dùng low quality để session lâu ⚡" -ForegroundColor Yellow
+            } else {
+              Write-Host "❌ Không thấy tunnel! Check authtoken hoặc ngrok limit." -ForegroundColor Red
+            }
+          } catch {
+            Write-Host "Lỗi lấy tunnel: $_" -ForegroundColor Red
           }
 
-          if (-not $ngrokUrl) {
-            Write-Host "Ngrok không cấp URL — log:"
-            Get-Content ngrok.log -ErrorAction SilentlyContinue | Write-Host
-            Get-Content ngrok-err.log -ErrorAction SilentlyContinue | Write-Host
-            Stop-Process -Id $ngrokProcess.Id -Force -ErrorAction SilentlyContinue
-            exit 1
-          }
+          Write-Host ""
+          Write-Host "Session max ~6h (GitHub limit). Re-run để renew." -ForegroundColor DarkCyan
+          Write-Host "Check usage: https://dashboard.ngrok.com/usage" -ForegroundColor DarkCyan
 
-          $cleanUrl = $ngrokUrl -replace '^tcp://',''
-          $createdAt = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
-
-          $reportLines = @(
-            '=======================================================',
-            'RDP NGROK - DucThang x TrueHieu Edition',
-            '=======================================================',
-            "FULL ADDRESS   : $cleanUrl",
-            "Username       : $USER",
-            "Password       : $PASS",
-            'Region         : ap (Singapore)',
-            "Created        : $createdAt",
-            '======================================================='
-          )
-          $report = ($reportLines -join "`r`n")
-          [System.IO.File]::WriteAllText("$(Get-Location)\rdp_info.txt", $report)
-
-          git add rdp_info.txt
-          git commit -m "Update ngrok RDP: $cleanUrl" --allow-empty
-          git push origin main --force-with-lease
-          Write-Host "✅ Đã commit: $cleanUrl"
-          Write-Host "Sẽ chạy đến khi cron 5h restart hoặc timeout."
-
-          # Giữ ngrok alive ~5h45m (timeout-minutes 350). Concurrency cancel khi cron mới fire.
-          Start-Sleep -Seconds 20700
-
-          Stop-Process -Id $ngrokProcess.Id -Force -ErrorAction SilentlyContinue
-          Write-Host "Hết phiên — đợi cron restart."
+          Start-Sleep -Seconds 21420
