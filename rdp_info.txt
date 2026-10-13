@@ -5,5 +5,5 @@ FULL ADDRESS   : 0.tcp.ap.ngrok.io:23096
 Username       : DucthengTechDz
 Password       : W1nd0ws-P4ssw0rd-2025!
 Region         : ap (Singapore)
-Created        : 2026-10-13 04:32:42
+Created        : 2026-10-13 12:20:03
 =======================================================
